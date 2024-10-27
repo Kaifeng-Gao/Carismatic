@@ -1,5 +1,3 @@
-# load("data/cleaned_data.RData")
-
 library(tidyverse)
 
 # -----------------------------
@@ -45,5 +43,8 @@ merged_df <- average_sales_df %>%
   select(Maker, Genmodel, Genmodel_ID, avg_sales) %>%
   inner_join(aggregated_trim_df, by = "Genmodel_ID")
 
+merged_df <- merged_df %>%
+  mutate(majority_fuel_type = factor(majority_fuel_type, levels = c("Petrol", "Diesel", "Other")))
+
 # Save the data
-# save(merged_df, file = "data/merged_data.RData")
+save(merged_df, file = "data/merged_data.RData")
