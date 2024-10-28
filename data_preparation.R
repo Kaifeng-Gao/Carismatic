@@ -11,7 +11,7 @@ sales_df <- read.csv("data/Sales_table.csv")
 trim_df <- read.csv("data/Trim_table.csv")
 
 # -----------------------------
-# Being processing
+# Being processing sales_df and trim_df
 # Calculate average sales per Genmodel, ignoring years with zero sales
 average_sales_df <- sales_df %>%
   rowwise() %>%
@@ -46,5 +46,39 @@ merged_df <- average_sales_df %>%
 merged_df <- merged_df %>%
   mutate(majority_fuel_type = factor(majority_fuel_type, levels = c("Petrol", "Diesel", "Other")))
 
+# -----------------------------
+# Processing ad_extra_df
+colnames(ad_extra_df)[colnames(ad_extra_df) == "Engin_size"] <- "Engine_size"
+
+aggregated_ad_extra_df <- ad_extra_df %>%
+  mutate(
+    # Remove units from Average_mpg and Top_speed columns and convert to numeric
+    Average_mpg = as.numeric(sub(" mpg", "", Average_mpg)),
+    Top_speed = as.numeric(sub(" mph", "", Top_speed))
+  ) %>%
+  group_by(Genmodel_ID) %>%
+  summarise(
+    avg_engine_power = mean(as.numeric(Engine_power), na.rm = TRUE),
+    avg_wheelbase = mean(as.numeric(Wheelbase), na.rm = TRUE),
+    avg_height = mean(as.numeric(Height), na.rm = TRUE),
+    avg_width = mean(as.numeric(Width), na.rm = TRUE),
+    avg_length = mean(as.numeric(Length), na.rm = TRUE),
+    avg_mpg = mean(as.numeric(sub(" mpg", "", Average_mpg)), na.rm = TRUE),
+    avg_top_speed = mean(as.numeric(sub(" mph", "", Top_speed)), na.rm = TRUE),
+
+    # Mode for Seat_num and Door_num
+    majority_seat_num = Seat_num[which.max(tabulate(match(Seat_num, unique(Seat_num))))],
+    majority_door_num = Door_num[which.max(tabulate(match(Door_num, unique(Door_num))))],
+    
+    # Categorical columns: take the most common value
+    majority_engine_size = Engine_size[which.max(tabulate(match(Engine_size, unique(Engine_size))))],
+    majority_bodytype = Bodytype[which.max(tabulate(match(Bodytype, unique(Bodytype))))],
+    majority_gearbox = Gearbox[which.max(tabulate(match(Gearbox, unique(Gearbox))))]
+  )
+
+final_merged_df <- merged_df %>%
+  left_join(aggregated_ad_extra_df, by = "Genmodel_ID")
+
+# -----------------------------
 # Save the data
-save(merged_df, file = "data/merged_data.RData")
+save(final_merged_df, file = "data/merged_data.RData")
