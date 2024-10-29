@@ -1,4 +1,4 @@
-load("data/merged_data.RData")
+load("data/full_data.RData")
 
 library(ggplot2)
 
