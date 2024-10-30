@@ -12,13 +12,37 @@ trim_df <- read.csv("data/Trim_table.csv")
 
 # -----------------------------
 # Being processing sales_df and trim_df
-# Calculate average sales per Genmodel, ignoring years with zero sales
+# Process sales_df to calculate adjusted average sales per Genmodel
 average_sales_df <- sales_df %>%
+  select(-X2020) %>%  # Remove the X2020 column due to covid influence
   rowwise() %>%
   mutate(avg_sales = {
-    # Get the sales values across columns starting with "X"
     sales_values <- c_across(starts_with("X"))
+    
+    # Filter out zero values to get only non-zero sales years
     non_zero_sales <- sales_values[sales_values != 0]
+    
+    # Exclude the first non-zero year, if there are multiple non-zero years
+    if (length(non_zero_sales) > 1) {
+      non_zero_sales <- non_zero_sales[-length(non_zero_sales)]
+    }
+    
+    # Remove unusually low values using IQR
+    if (length(non_zero_sales) > 1) {
+      q1 <- quantile(non_zero_sales, 0.25, na.rm = TRUE)
+      q3 <- quantile(non_zero_sales, 0.75, na.rm = TRUE)
+      iqr <- q3 - q1
+      lower_threshold <- q1 - 1.5 * iqr
+      
+      outliers <- non_zero_sales[non_zero_sales < lower_threshold]
+      non_zero_sales <- non_zero_sales[non_zero_sales >= lower_threshold]
+      
+      if (length(outliers) > 0) {
+        print(outliers)
+      }
+    } 
+    
+    # Calculate the mean of the remaining non-zero sales, or return NA if none remain
     if (length(non_zero_sales) > 0) {
       mean(non_zero_sales)
     } else {
