@@ -57,7 +57,7 @@ importance_df <- data.frame(Variable = names(importance_sorted), Importance = im
 ggplot(importance_df, aes(x = reorder(Variable, Importance), y = Importance)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +
-  labs(title = "Variable Importance from Random Forest", x = "Variables", y = "Importance") +
+  labs(title = "Variable Importance from Random Forest for Initial Data", x = "Variables", y = "Importance") +
   theme_minimal()
 
 # -----------------------------
@@ -104,5 +104,5 @@ importance_df_by_year <- data.frame(Variable = names(importance_sorted_by_year),
 ggplot(importance_df_by_year, aes(x = reorder(Variable, Importance), y = Importance)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +
-  labs(title = "Variable Importance from Random Forest", x = "Variables", y = "Importance") +
+  labs(title = "Variable Importance from Random Forest for By_year Data", x = "Variables", y = "Importance") +
   theme_minimal()
