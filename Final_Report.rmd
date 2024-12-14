@@ -28,11 +28,10 @@ Understanding the factors that influence car sales is essential for the automoti
 
 
 ## Introduction 
+
 Understanding the determinants of car sales is a critical area of research within the automotive industry. As consumer preferences evolve, both functional attributes such as fuel efficiency and aesthetic elements such as design play essential roles in purchasing decisions. Recent advancements in machine learning have enabled researchers to analyze large datasets, uncovering nuanced insights into what drives sales performance. Motivated by these developments, this study aims to investigate the impact of various factors, including car brand reputation, physical dimensions, and perceived "facial expressions," on car sales. While prior research highlights the importance of functional characteristics like fuel consumption and engine performance, the role of visual design elements remains underexplored. This project seeks to address this gap by combining traditional statistical methods with state-of-the-art machine learning models.
 
 The dataset used in this study was obtained from the Deep Visual Marketing platform and consists of 5,269 car records, each containing detailed attributes. These include physical specifications (e.g., engine size, dimensions), performance metrics (e.g., fuel consumption, average sales), and sentiment-based probabilities derived from visual features resembling emotions (e.g., happiness, sadness). Preprocessing steps such as imputation for missing values, feature scaling, and one-hot encoding were applied to prepare the data for modeling.
-
-The remainder of this paper is organized as follows. Section 2 describes the methodologies employed, including random forest, linear regression, backpropagation neural networks, and recurrent neural networks, to analyze the relationships between the variables and car sales. In Section 3, we present the results of the models, highlighting the dominance of functional attributes and the lack of influence from perceived facial expressions on sales performance. Section 4 discusses the implications of these findings, emphasizing recommendations for manufacturers and marketers to optimize their strategies. Finally, Section 5 concludes with a summary of the main insights and suggestions for future research directions. **I am not sure if we need have section XXX, we can revise this later**
 
 By examining both practical and aesthetic factors, this study provides a comprehensive analysis of car sales determinants, offering valuable insights for the automotive industry to refine its design, production, and marketing strategies.
 
@@ -48,68 +47,97 @@ By examining both practical and aesthetic factors, this study provides a compreh
 This project employed two datasets to investigate the factors influencing car sales and evaluate the predictive performance of different modeling approaches. The first dataset contained aggregated data, where sales for each car model were averaged across all years. The second dataset included yearly sales records for each car model, providing a more granular view of temporal sales patterns. Both datasets were analyzed using linear regression and backpropagation neural networks (BPNN), enabling a thorough comparison of model performance and insights across different data structures.
 
 ### Assumptions
+
 1. **Linear Regression**:
-   - Assumes a linear relationship between predictors and the outcome (sales).
-   - Assumes predictors are independent and residuals are normally distributed with constant variance.
-   - May struggle to capture non-linear relationships and interactions in the data.
-2. **Backpropagation Neural Network (BPNN)**:
-   - Assumes that relationships and patterns in the data can be captured through non-linear transformations using hidden layers and activation functions.
-   - Assumes features are properly scaled for efficient gradient descent optimization.
+   - Linearity: Assumes a linear relationship between avg_sales and predictors such as avg_price and avg_engine_power. This assumption may not fully capture complex interactions between features like majority_bodytype and avg_mpg, which are addressed through alternative models.
+   - Independence: Assumes predictors are not highly correlated. Multicollinearity among related variables like avg_width, avg_height, and avg_length was addressed where necessary to ensure stable coefficient estimates.
+   - Normality: Assumes that residuals are normally distributed. Outliers (e.g., cars with extremely high sales due to brand popularity or aggressive marketing) might violate this assumption and will be removed.
+2. **Random Forest**:
+   - Independence of Observations: Assumes that each car model’s sales data is independent, which was ensured by aggregating the data by model to eliminate repeated entries.
+   - No Assumption of Linearity: Captures non-linear relationships naturally, such as interactions between avg_engine_power and majority_fuel_type, making it particularly suited for complex datasets.
+   - Handling of Missing Data: Assumes consistent patterns of missingness, which were addressed through reliable imputation methods for any missing values in predictors.
+3. **Backpropagation Neural Network (BPNN)**:
+   - Non-Linearity: Assumes the network can effectively model non-linear relationships, making it well-suited for capturing interactions among predictors like avg_prob_disgust, majority_gearbox, and avg_engine_size.
+   - Feature Scaling: Assumes that predictors are properly scaled to allow efficient convergence during gradient descent. All numeric features were standardized to ensure model stability.
+   - Large Dataset Requirement: Assumes sufficient data availability to train  qthe network without overfitting. Although the dataset size was moderate, overfitting risks were minimized using dropout layers and weight regularization.
+   - Independence of Observations: Assumes that observations are independent, which was maintained by aggregating sales data per car model.
+4. **Recurrent Neural Network (RNN)**:
+   - Sequential Data Assumption: Assumes temporal or sequential dependencies in the dataset, such as year-to-year patterns in car sales trends. This assumption aligns directly with the yearly dataset used for this analysis, where sales for each model were observed over multiple years.
+   - Stationarity: Assumes that the temporal relationships in predictors (e.g., avg_price, avg_gas_emission) and the target (avg_sales) remain consistent across time. This assumption was addressed by checking for non-stationarity and applying transformations like differencing or detrending where needed.
+   - Feature Scaling: Requires scaled predictors for stable gradient updates during training. To satisfy this assumption, all numeric variables were standardized prior to model fitting.
 
 ### Observations, Predictors, and Outcome
-- **Aggregated Dataset**:
-  - Observations: Rows represent unique car models.
-  - Predictors: Physical attributes (e.g., engine size, fuel efficiency, dimensions), categorical variables (e.g., fuel type, body type), and sentiment-based probabilities (e.g., happiness, sadness).
-  - Outcome (\(y\)): Average sales of each car model across all years.
+
+- Aggregated Dataset:
+  - Observations: Rows represent unique car models, each summarized with average values for both numerical and categorical variables across all years.
+  - Predictors: A combination of: 
+    - Physical Attributes: Includes variables like avg_engine_power, avg_gas_emission, avg_wheelbase, avg_mpg, avg_height, avg_width, and avg_length, reflecting the physical specifications of each car model.
+    - Categorical Features: Includes majority_fuel_type, majority_bodytype, majority_gearbox, majority_seat_num, and majority_door_num, representing the dominant characteristics for each model.
+    - Sentiment-Based Features: Variables like avg_prob_happy, avg_prob_sad, and avg_prob_disgust quantify inferred emotional sentiment towards each model.
+  - Outcome (\(y\)): The average sales (avg_sales) of each car model across all available years, providing a summarized measure of performance.
   
-- **Yearly Dataset**:
-  - Observations: Rows represent yearly sales data for each car model.
-  - Predictors: Same as the aggregated dataset, with the addition of the year variable to capture temporal trends.
-  - Outcome (\(y\)): Annual sales for each car model.
+- Yearly Dataset:
+  - Observations: Rows represent yearly sales data for each car model, capturing more granular trends and patterns over time.
+  - Predictors: Includes all predictors from the aggregated dataset, with the addition of:
+    - Year: Captures temporal trends and changes in performance across time.
+    - Annual Variability: Predictors reflect year-specific performance or conditions, such as avg_price or sentiment probabilities (e.g., avg_prob_happy) for a given year.
+  - Outcome (\(y\)):  The annual sales (Sales) for each car model in a given year, providing a detailed view of temporal variations in performance.
 
 ### Models and Their Representations
 1. **Linear Regression**:
    - Aggregated Dataset: \( y = \beta_0 + \sum_{i=1}^{p} \beta_i X_i + \epsilon \)
-   - Yearly Dataset: Includes an additional predictor for the year to account for temporal trends.
+   - Yearly Dataset: An additional predictor, Year, was included to account for temporal trends in annual sales (Sales). The coefficients reflect the expected change in yearly sales for a one-unit increase in the corresponding predictor, holding other variables constant.
    - Coefficients represent the expected change in sales for a one-unit increase in the corresponding predictor, holding all other variables constant.
-
-2. **Backpropagation Neural Network (BPNN)**:
+2. **Random Forest**:
+   - A non-parametric, tree-based ensemble model was implemented to capture non-linear relationships and interactions among predictors.
+   - Aggregated Dataset: The model identified important features influencing long-term sales trends across car models. Random forest’s ability to rank feature importance helped in understanding drivers of average sales.
+   - Yearly Dataset: Random forest also captured temporal dynamics by incorporating Year and other predictors, identifying how the importance of variables such as avg_price or majority_fuel_type fluctuates over time.
+3. **Backpropagation Neural Network (BPNN)**:
    - A multi-layer perceptron with ReLU activation functions and dropout layers was implemented.
    - Model architecture and hyperparameters (e.g., learning rate, number of layers, and hidden units) were optimized separately for each dataset.
    - The non-linear nature of BPNN allows for capturing complex relationships and interactions among predictors.
+4. **Recurrent Neural Network (RNN)**:
+   - Yearly Dataset Only: RNNs were applied to the yearly dataset to model sequential dependencies in car sales over time. Long Short-Term Memory (LSTM) units were used to manage long-term dependencies and mitigate vanishing gradient issues.
+   - The model incorporated both year-specific predictors (e.g., avg_price, avg_prob_happy) and temporal patterns (Year) to predict annual sales. RNNs excelled in identifying trends and evolving relationships that could not be captured by static models.
 
 ### Performance Metrics
-- **Aggregated Dataset**:
-  - **Linear Regression**: R-squared = 0.247, MAE approximately 3,300. Limited explanatory power due to linearity assumptions.
-  - **BPNN**: MAE approximately 2,561, outperforming linear regression by capturing non-linear patterns in the data.
-  
-- **Yearly Dataset**:
-  - **Linear Regression**: Lower R-squared and higher MAE compared to the aggregated dataset, reflecting challenges in modeling yearly sales variability.
-  - **BPNN**: MAE approximately 3,312, with performance declining slightly due to the increased complexity and noise in yearly sales data.
 
-### Comparison of Models and Datasets
-- **Linear Regression**:
-  - Aggregated Dataset: Easier to interpret coefficients but struggles to model non-linear relationships effectively.
-  - Yearly Dataset: Inclusion of the year variable provides insights into temporal trends but offers limited improvement in accuracy.
+**Aggregated Dataset**
+
+We employed three different models to predict average sales across car models:
+
+  1. **Linear Regression**:
   
-- **BPNN**:
-  - Aggregated Dataset: Outperformed all other models in predictive accuracy, indicating suitability for summarizing long-term trends.
-  - Yearly Dataset: While capable of handling complex interactions, the model's performance was hindered by the variability and noise in annual sales data.
+   - R-squared: Measures the proportion of variance in sales explained by the predictors.
+   - Mean Absolute Error (MAE): Represents the average absolute difference between predicted and actual sales.
+   
+  2. **Random Forest**:
   
+```{r}
+  knitr::include_graphics("visualizations/Random Forest of Aggregated Data Summary.png")
+```
+     
+   - Out-of-Bag (OOB) R-squared: The model achieved an R-squared (OOB) value of 0.2079, which indicates that approximately 20.79% of the variance in avg_sales is explained by the predictors. While this suggests the model is capturing some patterns in the data, the relatively low R-squared indicates limited predictive power for this specific dataset. Potential reasons include: 
+    1. High variance in avg_sales that cannot be explained by the available predictors; 
+    2. Presence of noise or unobserved variables that influence car sales (e.g., marketing strategies, economic conditions).
+   
+   - Out-of-Bag (OOB) Prediction Error: The model’s Mean Squared Error (MSE) on OOB samples is 5,779,337.0, representing the average squared difference between predicted and actual avg_sales. The high value of the MSE is influenced by large variations in sales across different car models (ranging from 1 to over 84,000).  
+   
+   - The relatively low R-squared value suggests that either the predictors do not fully capture the complexity of factors influencing car sales or that random forest, despite being flexible, struggles with the inherent noise in the data.
+
+  3. **Backpropagation Neural Network (BPNN)**:
+  ...
+
+**Yearly Dataset**
+
+We employed random forest and RNN models.
+
   
 ## Visualization and interpretation of the results
 
-1. **Feature Importance (Linear Regression)**:
-   - Bar plots of regression coefficients highlight the relative impact of predictors such as fuel efficiency, car size, and engine power. Differences in coefficient significance between the aggregated and yearly datasets are clearly displayed.
-
-2. **Predicted vs. Actual Sales**:
-   - Scatter plots compare predicted and actual sales for both datasets. For the aggregated dataset, BPNN predictions closely align with actual values, indicating high accuracy. In contrast, yearly dataset predictions show more dispersion, reflecting the added complexity of annual trends.
-
-3. **Residual Analysis**:
-   - Residual plots for linear regression reveal limitations in modeling non-linear patterns. For the yearly dataset, residuals exhibit heteroscedasticity, indicating that the model struggles to account for temporal variability.
-
-4. **Learning Curves (BPNN)**:
-   - Visualizations of training and validation loss across epochs for each dataset illustrate the convergence behavior of the neural network. The aggregated dataset shows smooth convergence, while the yearly dataset exhibits more fluctuations, indicative of higher complexity.
+```{r fig.align='center'}
+knitr::include_graphics("visualizations/Variable Importance from Random Forest of Aggregated Data.png")
+```
   
 
 ## Conclusions and recommendations

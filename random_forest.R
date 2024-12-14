@@ -57,7 +57,7 @@ importance_df <- data.frame(Variable = names(importance_sorted), Importance = im
 ggplot(importance_df, aes(x = reorder(Variable, Importance), y = Importance)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +
-  labs(title = "Variable Importance from Random Forest for Initial Data", x = "Variables", y = "Importance") +
+  labs(title = "Variable Importance from Random Forest of Aggregated Data", x = "Variables", y = "Importance") +
   theme_minimal()
 
 # -----------------------------
